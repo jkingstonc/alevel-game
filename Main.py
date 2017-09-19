@@ -1,6 +1,6 @@
 #importing the nesescary librarys
 import pygame
-import eztext
+import pygame_textinput
 from pygame.locals import *
 import os
 import sys
@@ -38,10 +38,10 @@ def generatePonds(numOfPonds): #generates the randomly positioned ponds
 def generateNpc(num, size):
     x = random.randint(0, MAPHEIGHT)
     y = random.randint(0, MAPWIDTH)
-    if num % 2 == 0:
-        for i in range(size):
-            for j in range(size):
-                tileMap[x + i][y + j][0] = WOOD
+    #if num % 2 == 0:
+        #for i in range(size):
+            #for j in range(size):
+                #tileMap[x + i][y + j][0] = WOOD
 
 def generatePortal(): #function to randomly generate one portal per level
     x = random.randint(0, MAPWIDTH) #random x coord
@@ -131,8 +131,6 @@ def saveOptions():
     pygame.draw.rect(screen, BLACK, ((width / 2) - 140, (height / 2) - 50, width / 16, height / 16), 5)
     screen.blit(font_saveOptions.render("load", True, (0, 0, 0)), ((width / 2) + 80, (height / 2) - 50))
 
-
-
     # fileManager = FileManager("gameDatabase.db")
     # name = input("username")
     # fileManager.saveGame(name, done)
@@ -201,7 +199,7 @@ screen = pygame.display.set_mode((MAPWIDTH*TILESIZE, MAPHEIGHT*TILESIZE),pygame.
 font_player = pygame.font.SysFont('Arial', 15)
 font_monster = pygame.font.SysFont('Arial', 10)
 font_timer = pygame.font.SysFont('Arial', 50)
-font_died = pygame.font.SysFont('Arial', 300)
+font_died = pygame.font.SysFont('Arial', 200)
 font_saveOptions = pygame.font.SysFont('Arial', 25)
 
 width, height = pygame.display.get_surface().get_size() #storing width and height of screen in variables
@@ -224,14 +222,15 @@ water=0
 xp=0
 died = False
 
-username = eztext.Input(maxlength=45, color=(255,0,0), prompt='username: ')
+# Create TextInput-object
+username = pygame_textinput.TextInput()
 
 #monster variables
 monsters = []
 MONSTERHEALTH = 100
 MONSTERATTACK = 30
 monsterMovementPoints = 2
-MOVEMONSTER = 3000
+MOVEMONSTER = 1000
 moveMonsterEvent = pygame.USEREVENT
 
 clock = pygame.time.Clock()
@@ -244,10 +243,7 @@ playery = random.randint(0,MAPHEIGHT)*TILESIZE #giving the player a random x coo
 
 
 while not done and died == False:
-    clock.tick()
-    #events = pygame.event.get()
-    if died == True:
-        screen.blit(font_died.render("YOU DIED", True, (0,0,0)), (0, 0))  #redering the player health
+       
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             done = True
@@ -341,7 +337,7 @@ while not done and died == False:
                             elif tileMap[int(yTilePos)][int(xTilePos)][0] == WATER: #adding points to iron stash
                                 water=water+1
 
-    if pause != True: #run the following code if the game isn't paused
+    if pause == False: #run the following code if the game isn't paused
         renderEnviroment() #call the function to render the enviroment
         renderPlayer() #call the function to render the player
         renderMonster() #call the function to render the monsters
@@ -361,14 +357,19 @@ while not done and died == False:
         CURSOR.center = (mousex,mousey)
         pygame.draw.rect(screen, cursorColour, CURSOR, 2)
         ##########################
-    else:
+    if pause == True:
 
+        # Feed it with events every frame
         username.update(pygame.event.get())
-        username.draw(screen)
-
+        # Blit its surface onto the screen
+        screen.blit(username.get_surface(), (width/2, height/2))
+        
         ##### MOUSE LOGIC #####
         mousex, mousey = pygame.mouse.get_pos()
         mousex = mousex - (mousex % TILESIZE) + TILESIZE / 2  # getting the x tile the mouse is on
         mousey = mousey - (mousey % TILESIZE) + TILESIZE / 2  # getting the y tile the mouse is on
 
-    pygame.display.update()
+    if died == True:
+        screen.blit(font_died.render("YOU DIED", True, (0,0,0)), (width/2-500, height/2-100))  #redering the player health
+    pygame.display.flip()
+    clock.tick(30)
