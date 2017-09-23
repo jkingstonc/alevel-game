@@ -2,12 +2,8 @@
 import pygame
 import pygame_textinput
 from pygame.locals import *
-import os
-import sys
 import random
 import math
-import time
-
 from FileManager import FileManager
 
 fileManager = FileManager("gameDatabase.db")
@@ -60,7 +56,9 @@ def generateTileMap(): #generating the 2D tile array
     generateMonster(playerLevel) #first generating monsters
     # generating the tile map below
     global tileMap #setting the array variable global
-    tileMap = [[[weighted_choice(tiles), 0] for i in range(MAPWIDTH)] for j in range(MAPHEIGHT)] #creating a 2D array in the size of the width and height specified
+    tileMap = [[[weighted_choice(tiles), 0]
+                for i in range(MAPWIDTH)]
+                for j in range(MAPHEIGHT)] #creating a 2D array in the size of the width and height specified
     generatePonds(random.randint(1, 6)) # generate ponds
     generateNpc(random.randint(0, 100), random.randint(3, 5)) #generate NPCs
     generatePortal() #generate portal
@@ -90,16 +88,30 @@ def renderMonster(): #function to render monsters
 def moveMonster(): #function to move each monster
     if len(monsters) > 0: #making sure the array isn't empty
         for i in range(len(monsters)): #looping through the monster array
-            x = random.randint(-monsterMovementPoints, monsterMovementPoints)
-            y = random.randint(-monsterMovementPoints, monsterMovementPoints)
+            moveChance = random.randint(0,10)
+            if moveChance > 5:
+                if (playerx//TILESIZE - monsters[i][0]) > 0:
+                    x = monsterMovementPoints
+                else:
+                    x = - monsterMovementPoints
+                if playery//TILESIZE - monsters[i][1] > 0:
+                    y = monsterMovementPoints
+                else:
+                    y = - monsterMovementPoints
+            else:
+                x = random.randint(-monsterMovementPoints, monsterMovementPoints)
+                y = random.randint(-monsterMovementPoints, monsterMovementPoints)
             monsters[i] = [monsters[i][0] + x, monsters[i][1] + y, monsters[i][2]]
+            if monsters[i][0] == playerTilex and monsters[i][1] == playerTiley:
+                monsterAttack()
 
 def monsterAttack(): #function to make the monster attack
     global playerHealth #making the playerHealth variable global so it can be accessed anywhere
-    playerHealth = playerHealth - MONSTERATTACK #removing health off the player
-    if playerHealth < 0: #check if the player is dead
-        global died #making the dead variable global so it can be accessed anywhere
-        died = True #setting the dead variable true so the game knows the player is dead
+    if random.randint(0,10) // 2 == 0:
+        playerHealth = playerHealth - MONSTERATTACK #removing health off the player
+        if playerHealth < 0: #check if the player is dead
+            global died #making the dead variable global so it can be accessed anywhere
+            died = True #setting the dead variable true so the game knows the player is dead
 
 def renderPlayer(): #function to render the player and all related variables
     pygame.draw.rect(screen, RED, (playerx, playery, TILESIZE, TILESIZE))  # rendering the player
@@ -109,10 +121,11 @@ def renderPlayer(): #function to render the player and all related variables
     screen.blit(font_player.render("recource points: "+str(playerPoints), True, (255, 255, 255)),(300, 0))  # redering the player recource points
     screen.blit(font_player.render("iron: " + str(iron), True, (255, 255, 255)),(440, 0))  # redering the player iron
     screen.blit(font_player.render("water: " + str(water), True, (255, 255, 255)),(500, 0))  # redering the player water
+    screen.blit(font_player.render(username, True, (255, 255, 255)),(width-85, 0))  # redering the username
 
 def playerAttack(i): #function to make the player attack #i being the specific monster in the array
     monsters[i][2]=monsters[i][2]-playerAttackPoints #removing health from the indexed monster
-    if monsters[i][2]==0: #checking if the monster is dead
+    if monsters[i][2]<=0: #checking if the monster is dead
         del monsters[i] #deleting the monster from the array
         global xp #making the player xp variable global so it can be accessed anywhere
         xp=xp+1 #incrementing the player xp variable by 1
@@ -121,26 +134,103 @@ def saveOptions():
     pygame.draw.rect(screen, WHITE, (width/2-(width/4), height/2-(height/4), width/2, height/2))
     pygame.draw.rect(screen, BLACK, (width / 2 - (width / 4), height / 2 - (height / 4), width / 2, height / 2), 5)
 
-    screen.blit(font_saveOptions.render("SAVE GAME", True, (0, 0, 0)), ((width/2)-160, (height/2)-130))
-    pygame.draw.rect(screen, (169, 169, 169), ((width / 2)+60, (height / 2) - 50, width / 16, height / 16))
-    pygame.draw.rect(screen, BLACK, ((width / 2)+60, (height / 2)-50, width / 16, height / 16), 5)
-    screen.blit(font_saveOptions.render("save", True, (0, 0, 0)), ((width / 2) - 125, (height / 2) - 50))
-
-    screen.blit(font_saveOptions.render("LOAD GAME", True, (0, 0, 0)), ((width / 2) + 40, (height / 2) - 130))
+    screen.blit(font_saveOptions.render("SAVE GAME", True, (0, 0, 0)), ((width/2)-175, (height/2)-130))
     pygame.draw.rect(screen, (169, 169, 169), ((width / 2) - 140, (height / 2) - 50, width / 16, height / 16))
     pygame.draw.rect(screen, BLACK, ((width / 2) - 140, (height / 2) - 50, width / 16, height / 16), 5)
-    screen.blit(font_saveOptions.render("load", True, (0, 0, 0)), ((width / 2) + 80, (height / 2) - 50))
+    screen.blit(font_saveOptions.render("save", True, (0, 0, 0)), ((width / 2) - 130, (height / 2) - 50))
+
+    screen.blit(font_saveOptions.render("LOAD GAME", True, (0, 0, 0)), ((width / 2) + 25, (height / 2) - 130))
+    pygame.draw.rect(screen, (169, 169, 169), ((width / 2) + 60, (height / 2) - 50, width / 16, height / 16))
+    pygame.draw.rect(screen, BLACK, ((width / 2) + 60, (height / 2) - 50, width / 16, height / 16), 5)
+    screen.blit(font_saveOptions.render("load", True, (0, 0, 0)), ((width / 2) + 75, (height / 2) - 47))
 
     # fileManager = FileManager("gameDatabase.db")
     # name = input("username")
     # fileManager.saveGame(name, done)
+
+def renderInput(usernameText, save_load):
+    # Feed it with events every frame
+    usernameText.update(pygame.event.get())
+    if save_load == True:
+        # Blit its surface onto the screen
+        screen.blit(usernameText.get_surface(), ((width / 2) -175, (height / 2) -100))
+    else:
+        # Blit its surface onto the screen
+        screen.blit(usernameText.get_surface(), ((width / 2) + 30, (height / 2) - 100))
+
+def loadData(data): #function to load the save data
+    global username
+    username=data[0]
+    global playerHealth
+    playerHealth=data[1]
+    global playerAttackPoints
+    playerAttackPoints=data[2]
+    global playerLevel
+    playerLevel=data[3]
+    global xp
+    xp=data[4]
+    global playerx
+    playerx=data[5]
+    global playery
+    playery=data[6]
+
+def generateBoss():
+    size = random.randint(3,8)
+    x=random.randint(0,MAPWIDTH)
+    y=random.randint(0,MAPHEIGHT)
+    global bossHealth
+
+    for i in range(size):
+        for j in range(size):
+            boss.append([i+x, j+y])  # adding a monster to the monster array
+
+def moveBoss():
+    x = random.randint(-monsterMovementPoints, monsterMovementPoints)
+    y = random.randint(-monsterMovementPoints, monsterMovementPoints)
+    if len(boss) > 0: #making sure the array isn't empty
+        for i in range(len(boss)): #looping through the monster array
+            boss[i] = [boss[i][0] + x, boss[i][1] + y]
+
+def renderBoss():
+    if len(boss) > 0: #making sure the boss array isn't empty
+        for i in range(len(boss)): #looping through the boss array
+            pygame.draw.rect(screen, GREEN, (boss[i][0] * TILESIZE, boss[i][1] * TILESIZE, TILESIZE, TILESIZE))  # rendering the boss
+            screen.blit(font_monster.render(str(bossHealth), True, (0, 0, 0)),(boss[i][0] * TILESIZE, boss[i][1] * TILESIZE))  # redering boss health
+
+def bossBattle(mousex,mousey,xDist,yDist):
+    global boss
+    global bossDied
+    global playerLevel
+    if bossDied == False:
+        if abs(xDist // TILESIZE) < movementPoints: #checking how close the player is on the x axis
+            if abs(yDist // TILESIZE) < movementPoints: #checking how close the player is on the y axis
+                for i in range(len(boss)): #looping through the boss array
+                    if mousex == boss[i][0] and mousey == boss[i][1]:
+                        global bossHealth
+                        bossHealth=bossHealth-playerAttackPoints
+                        if bossHealth <= 0:
+                            del boss[:]
+                            bossDied = True
+                            playerLevel=playerLevel+100
+                            break
+
+def deathAnimation():
+    x = random.randint(0, MAPWIDTH)
+    y = random.randint(0, MAPHEIGHT)
+    global deathAnimationArray
+    deathAnimationArray.append([x, y])  # adding a monster to the monster array
+
+    if len(deathAnimationArray) > 0: #making sure the monster list isn't empty
+        for i in range(len(deathAnimationArray)): #looping through the monster array
+            pygame.draw.rect(screen, BLACK, (deathAnimationArray[i][0] * TILESIZE, deathAnimationArray[i][1] * TILESIZE, TILESIZE, TILESIZE))  # rendering the boss
+
 
 #game dimenions
 TILESIZE = 20 #the size in pixels of each square tile
 MAPWIDTH = 60 #the ammount of tiles on the x axis
 MAPHEIGHT = 30 #the ammount of tiles on the y axis
 
-#tile values
+#tile valuesz
 DIRT = 0
 STONE = 1
 IRON = 2
@@ -205,25 +295,26 @@ font_saveOptions = pygame.font.SysFont('Arial', 25)
 width, height = pygame.display.get_surface().get_size() #storing width and height of screen in variables
 done = False #variable to be used when exiting
 pause = False #variable to pause the game
+showInput = False
 
 CURSOR = Rect(0, 0, TILESIZE, TILESIZE) #initialising a rectangle to be used as a cursor
-
-# x=0
-# y=0
 
 #main player variables
 playerHealth = 100
 playerAttackPoints = 50
 playerPoints = 0
 playerLevel = 1
-movementPoints = 1
+movementPoints = 2
 iron=0
 water=0
 xp=0
 died = False
+deathAnimationArray =[]
+
 
 # Create TextInput-object
-username = pygame_textinput.TextInput()
+usernameText = pygame_textinput.TextInput()
+username = ""
 
 #monster variables
 monsters = []
@@ -233,54 +324,56 @@ monsterMovementPoints = 2
 MOVEMONSTER = 1000
 moveMonsterEvent = pygame.USEREVENT
 
-clock = pygame.time.Clock()
-pygame.time.set_timer(moveMonsterEvent, MOVEMONSTER)
+genBoss = False
+boss=[]
+bossHealth=500
+bossDied = False
 
-generateTileMap()
+clock = pygame.time.Clock()
+
+pygame.time.set_timer(moveMonsterEvent, MOVEMONSTER) #clock to move monster
 
 playerx = random.randint(0,MAPWIDTH)*TILESIZE #giving the player a random x coord on the grid
 playery = random.randint(0,MAPHEIGHT)*TILESIZE #giving the player a random x coord on the grid
 
+generateTileMap()
 
-while not done and died == False:
-       
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            done = True
-        if event.type == moveMonsterEvent:
-            moveMonster()
+while not done:
+    playerTilex = playerx//TILESIZE
+    playerTiley = playery // TILESIZE
 
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_s:
-                if pause == False:
-                    saveOptions()
-                pause = not pause
+    mousex, mousey = pygame.mouse.get_pos()
+    mousex = mousex - (mousex % TILESIZE) + TILESIZE / 2  # getting the x tile the mouse is on
+    mousey = mousey - (mousey % TILESIZE) + TILESIZE / 2  # getting the y tile the mouse is on
 
+    if pause == False and died == False:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                done = True
+            if event.type == moveMonsterEvent:
+                moveMonster()
+                moveBoss()
 
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    pause = not pause
 
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            (button1, button2, button3,) = pygame.mouse.get_pressed()  # get button pressed
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                (button1, button2, button3,) = pygame.mouse.get_pressed()  # get button pressed
 
-            if pause == True:
                 if button1:
-                    if mousex > ((width / 2) - 125) and mousex < ((width / 2) - 75): #x bounds of save button
-                        if mousey > ((height / 2) - 50) and mousey < ((height / 2) + 25): #y bounds of save button
-                            print("saving...")
-                            username = input("username")
-                            fileManager.saveGame(username,playerHealth,done)
-                    if mousex > ((width / 2) + 80) and mousex < ((width / 2) + 180): #x bounds of load button
-                        if mousey > ((height / 2) - 50) and mousey < ((height / 2) + 25): #y bounds of load button
-                            print("loading...")
 
-            else: #only run if the game isn't paused
-                if button1:
-                    #move player
                     xDist = ((mousex - playerx) - TILESIZE / 2)#distance to travel
                     yDist = ((mousey - playery) - TILESIZE / 2)#distance to travel
+
 
                     xTilePos = (mousex-(TILESIZE/2))/TILESIZE
                     yTilePos = (mousey-(TILESIZE/2))/TILESIZE
 
+                    if genBoss == True: #only attacking boss if boss has been generated
+                        bossBattle(xTilePos, yTilePos, xDist, yDist) #managing boss battle
+
+                    # move player
                     if tileMap[int(yTilePos)][int(xTilePos)][0] != WATER: #making sure the player cant move onto water
                         # making sure the player can only move a certian distance per click
                         if abs(xDist // TILESIZE) > movementPoints:
@@ -300,12 +393,12 @@ while not done and died == False:
                             playery = playery + yDist
                             cursorColour = LIGHTGREEN
                             for i in range(len(monsters)): #checking if player is attacking monster
-                                if monsters[i][0] == int(playerx/TILESIZE) and monsters[i][1] == int(playery/TILESIZE):
+                                if monsters[i][0] == int(playerTilex) and monsters[i][1] == int(playerTiley):
                                     playerAttack(i)
                                     monsterAttack()
                                     break
 
-                    #indicating the player cannot move to the selected tile
+                                    #indicating the player cannot move to the selected tile
                         elif tileMap[int((playery + yDist) // TILESIZE)][int((playerx + xDist) // TILESIZE)][0] == WATER:
                             cursorColour = RED
                     else:
@@ -313,9 +406,7 @@ while not done and died == False:
 
 
                     ## moving the player through portals
-                    xTilePos = playerx / TILESIZE
-                    yTilePos = playery / TILESIZE
-                    if tileMap[int(yTilePos)][int(xTilePos)][0] == PORTAL:
+                    if tileMap[int(playerTiley)][int(playerTilex)][0] == PORTAL:
                         del monsters[::]
                         generateTileMap()
 
@@ -337,39 +428,61 @@ while not done and died == False:
                             elif tileMap[int(yTilePos)][int(xTilePos)][0] == WATER: #adding points to iron stash
                                 water=water+1
 
-    if pause == False: #run the following code if the game isn't paused
-        renderEnviroment() #call the function to render the enviroment
-        renderPlayer() #call the function to render the player
-        renderMonster() #call the function to render the monsters
-        if xp == 10: #check if the player's xp level is 10
-            playerLevel=playerLevel+1 #increment the player's level by 1
-            xp=0 #reset the xp level back to 0
+        renderEnviroment()  # call the function to render the enviroment
+        renderPlayer()  # call the function to render the player
+        renderMonster()  # call the function to render the monsters
+        renderBoss()
+        if xp == 10:  # check if the player's xp level is 10
+            playerLevel = playerLevel + 1  # increment the player's level by 1
+            playerHealth = playerHealth + 100 # adding health to the player
+            xp = 0  # reset the xp level back to 0
 
-        ##### MOUSE LOGIC #####
-        mousex,mousey = pygame.mouse.get_pos()
-        mousex = mousex-(mousex%TILESIZE)+TILESIZE/2 #getting the x tile the mouse is on
-        mousey = mousey-(mousey%TILESIZE)+TILESIZE/2 #getting the y tile the mouse is on
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             (button1, button2, button3,) = pygame.mouse.get_pressed()  # get button pressed
         else:
-            cursorColour = (0,0,0)
-        CURSOR.center = (mousex,mousey)
+            cursorColour = (0, 0, 0)
+        CURSOR.center = (mousex, mousey)
         pygame.draw.rect(screen, cursorColour, CURSOR, 2)
         ##########################
-    if pause == True:
 
-        # Feed it with events every frame
-        username.update(pygame.event.get())
-        # Blit its surface onto the screen
-        screen.blit(username.get_surface(), (width/2, height/2))
-        
-        ##### MOUSE LOGIC #####
-        mousex, mousey = pygame.mouse.get_pos()
-        mousex = mousex - (mousex % TILESIZE) + TILESIZE / 2  # getting the x tile the mouse is on
-        mousey = mousey - (mousey % TILESIZE) + TILESIZE / 2  # getting the y tile the mouse is on
+    if pause == True:
+        (button1, button2, button3,) = pygame.mouse.get_pressed()
+        x, y = pygame.mouse.get_pos()
+        if showInput == False:
+            for event in pygame.event.get():
+                if button1:  # checking if player clicked buttons
+                    if x > ((width / 2) - 125) and x < ((width / 2) - 75):  # x bounds of save button
+                        if y > ((height / 2) - 50) and y < ((height / 2) + 25):  # y bounds of save button
+                            showInput = True
+                            save_load = True
+
+
+                    if x > ((width / 2) + 80) and x < ((width / 2) + 180):  # x bounds of load button
+                        if y > ((height / 2) - 50) and y < ((height / 2) + 25):  # y bounds of load button
+                            showInput = True
+                            save_load = False
+
+        saveOptions()
+        if showInput == True:
+            renderInput(usernameText, save_load)
+            if len(usernameText.get_text()) > 9:
+                username = usernameText.get_text()
+                if save_load == True:
+                    fileManager.saveGame(username, playerHealth, playerAttackPoints, playerLevel, xp, playerx, playery)
+                else:
+                    fileManager.loadGame(username)
+                    loadData(fileManager.data)
+
+                pause = False
+
+    if playerLevel%10 ==0  and genBoss == False:
+        generateBoss()
+        genBoss = True
 
     if died == True:
-        screen.blit(font_died.render("YOU DIED", True, (0,0,0)), (width/2-500, height/2-100))  #redering the player health
-    pygame.display.flip()
-    clock.tick(30)
+        deathAnimation()
+        screen.blit(font_died.render("YOU DIED", True, (255,255,255)), (width/2-500, height/2-100))  #redering the player health
+    pygame.display.update()
+    clock.tick(60)
+
