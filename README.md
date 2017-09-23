@@ -1,6 +1,8 @@
 # alevel-game
 Things that need doing:
 
+make it fucking work
+
 0. allowing the user to save the game
 0.1. displaying username input field
 0.2. saving all variables to database
